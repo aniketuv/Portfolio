@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Aniket Bag - Cinematic Slide Portfolio">
+    <title>Aniket Bag | Final Cut</title>
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script> 
+    
+    <style>
+        /* --- CORE VARIABLES --- */
+        :root {
+            --bg: #020202;
+            --surface: rgba(20, 20, 20, 0.85);
+            --primary: #00ff88; 
+            --secondary: #00ccff;
+            --text: #e0e0e0;
+            --text-dim: #999;
+            --font-mono: 'Courier New', Courier, monospace;
+            --font-sans: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+
+        /* --- RESET & BASE --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        a { text-decoration: none; color: inherit; }
+        
+        html.lenis { height: auto; } 
+        .lenis.lenis-smooth { scroll-behavior: auto; } 
+        
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: var(--font-sans);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* --- THE SLIDE ANIMATION ENGINE --- */
+        .slide-up {
+            opacity: 0;
+            transform: translateY(100px); 
+            filter: blur(10px); 
+            transition: all 1s cubic-bezier(0.25, 1, 0.5, 1); 
+            will-change: transform, opacity;
+        }
+
+        .slide-up.in-view {
+            opacity: 1;
+            transform: translateY(0);
+            filter: blur(0);
+        }
+
+        /* Stagger delays */
+        .delay-1 { transition-delay: 0.1s; }
+        .delay-2 { transition-delay: 0.2s; }
+        .delay-3 { transition-delay: 0.3s; }
+        .delay-4 { transition-delay: 0.4s; }
+
+        /* --- LAYOUT UTILS --- */
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 30px; position: relative; z-index: 2; }
+        section { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 100px 0; position: relative; }
+        
+        /* --- TYPOGRAPHY --- */
+        h1, h2, h3 { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 3px; }
+        h1 { 
+            font-size: clamp(3.5rem, 9vw, 8rem); 
+            line-height: 0.95; 
+            font-weight: 900; 
+            margin-bottom: 0px; 
+        }
+        h2 { font-size: 2rem; margin-bottom: 40px; display: flex; align-items: center; gap: 15px; }
+        h2::after { content: ''; height: 1px; background: var(--secondary); flex-grow: 1; opacity: 0.3; }
+        .gradient-text {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .mono { font-family: var(--font-mono); color: var(--primary); font-size: 0.9rem; }
+
+        /* --- HERO SECTION --- */
+        #home {
+            height: 100vh; 
+            align-items: flex-start;
+            overflow: hidden;
+            padding: 0; 
+        }
+
+        .hero-visual-container {
+            position: absolute; top: 0; right: 0; width: 65%; height: 100%; z-index: 0; 
+        }
+
+        .hero-photo {
+            width: 100%; height: 100%;
+            object-fit: cover; 
+            object-position: center bottom;
+            filter: grayscale(100%) contrast(1.1) brightness(0.9);
+            -webkit-mask-image: linear-gradient(to right, transparent 5%, black 60%);
+            mask-image: linear-gradient(to right, transparent 5%, black 60%);
+        }
+
+        .hero-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(to bottom, transparent 0px, transparent 3px, rgba(0,0,0,0.3) 4px);
+            pointer-events: none; mix-blend-mode: overlay; z-index: 1;
+        }
+
+        /* --- HERO LAYOUT --- */
+        .hero-content { 
+            position: relative; z-index: 2; max-width: 650px; 
+            text-shadow: 0 10px 30px rgba(0,0,0,0.9);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; 
+            padding-top: 150px; 
+            padding-bottom: 50px; 
+        }
+
+        /* --- NAV --- */
+        nav {
+            position: fixed; top: 0; width: 100%; padding: 30px 50px;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 100; mix-blend-mode: difference;
+        }
+        .logo { font-weight: 900; font-family: var(--font-mono); letter-spacing: 2px; color: white; }
+        .nav-links a { margin-left: 40px; font-size: 0.8rem; text-decoration: none; color: white; font-family: var(--font-mono); letter-spacing: 1px;}
+        .nav-btn {
+            border: 1px solid var(--primary); padding: 8px 15px; color: var(--primary) !important;
+            transition: 0.3s;
+        }
+        .nav-btn:hover { background: var(--primary); color: black !important; }
+
+        /* --- CARDS --- */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px; }
+        
+        .card {
+            display: block;
+            background: var(--surface); border: 1px solid rgba(255,255,255,0.08);
+            padding: 30px; transition: 0.3s; backdrop-filter: blur(5px);
+            position: relative;
+        }
+        .card::after {
+            content: '↗'; position: absolute; top: 20px; right: 20px; 
+            color: var(--primary); opacity: 0; transition: 0.3s; font-family: sans-serif;
+        }
+        .card:hover { border-color: var(--secondary); transform: translateY(-5px); }
+        .card:hover::after { opacity: 1; transform: translate(5px, -5px); }
+        
+        .card h3 { font-size: 1.3rem; margin-bottom: 10px; color: white; }
+        .tags .tag { font-size: 0.7rem; color: var(--primary); border: 1px solid var(--primary); padding: 3px 8px; margin-right: 5px; font-family: var(--font-mono); display: inline-block; margin-top: 10px;}
+
+        /* --- CONTACT BUTTON --- */
+        .contact-btn {
+            display: inline-block;
+            padding: 15px 40px;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            letter-spacing: 2px;
+            margin-top: 30px;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .contact-btn:hover {
+            background: var(--primary);
+            color: black;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+        }
+
+        /* --- SOCIAL ICONS --- */
+        .social-container {
+            display: flex; gap: 30px; justify-content: center; margin-top: 30px;
+        }
+        .social-icon {
+            width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 50%;
+            transition: 0.3s; fill: var(--text-dim);
+        }
+        .social-icon svg { width: 22px; height: 22px; }
+        
+        .social-icon:hover { transform: translateY(-5px); border-color: var(--primary); fill: var(--primary); }
+        .social-icon:nth-child(2):hover { border-color: #0077b5; fill: #0077b5; } /* LinkedIn Blue */
+        .social-icon:nth-child(3):hover { border-color: #e4405f; fill: #e4405f; } /* Insta Pink */
+
+        @media (max-width: 768px) {
+            nav { padding: 20px; } .nav-links { display: none; }
+            h1 { font-size: 3.5rem; }
+            .hero-visual-container { width: 100%; opacity: 0.4; }
+            .hero-photo { -webkit-mask-image: none; mask-image: none; }
+            .container { padding: 0 20px; }
+            .hero-content { padding-top: 120px; padding-bottom: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="network-canvas" style="position:fixed; top:0; left:0; width:100%; height:100%; z-index:-1; opacity:0.15;"></canvas>
+
+    <nav>
+        <div class="logo">ANIKET.BAG</div>
+        <div class="nav-links">
+            <a href="#work" class="hover-trigger">PROJECTS</a>
+            <a href="#about" class="hover-trigger">PROFILE</a>
+            <a href="#contact" class="hover-trigger nav-btn">CONTACT</a>
+        </div>
+    </nav>
+
+    <section id="home">
+        <div class="hero-visual-container parallax-layer" data-speed="0.2">
+            <img id="hero-img-target" class="hero-photo" alt="Aniket Bag Portrait">
+            <div class="hero-overlay"></div>
+        </div>
+
+        <div class="container hero-content parallax-layer" data-speed="-0.1">
+            <div>
+                <p class="mono slide-up delay-1">/// SYSTEM ONLINE // ROURKELA</p>
+                <h1 class="slide-up delay-2">THE LOGIC <br> <span class="gradient-text">& THE LORE</span></h1>
+            </div>
+            
+            <div class="slide-up delay-3" style="margin-bottom: 20px;">
+                <p style="font-size: 1.1rem; color: var(--text); border-left: 2px solid var(--primary); padding-left: 20px; max-width: 500px;">
+                    Merging the precision of cybersecurity with the chaos of creative storytelling. 
+                    <br><br>
+                    I don't just write code; I build narratives.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <div class="container">
+        <section id="work">
+            <h2 class="slide-up">Selected Works <span style="color:var(--primary)">//01</span></h2>
+            <div class="grid" id="project-grid"></div>
+        </section>
+
+        <section id="about">
+            <h2 class="slide-up">The Operator <span style="color:var(--secondary)">//02</span></h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 50px;">
+                <div class="slide-up delay-1">
+                    <h3 style="margin-bottom: 20px; color: var(--text);">Background</h3>
+                    <p style="color: var(--text-dim); margin-bottom: 20px;">
+                        I am a final-year B.Sc. Computer Science student based in Rourkela. My work exists at the intersection of offensive security and software engineering.
+                    </p>
+                    <p style="color: var(--text-dim);">
+                        When I am not analyzing network vulnerabilities or building tools like <strong>LinkUp</strong>, I am crafting stories, writing scripts, or vibing to the music.
+                    </p>
+                </div>
+                <div class="slide-up delay-2">
+                    <h3 style="margin-bottom: 20px; color: var(--text);">Tech Arsenal</h3>
+                    <div id="skill-grid" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" style="min-height: 60vh;">
+            <div style="text-align: center;">
+                <h2 class="slide-up" style="justify-content: center; margin-bottom: 20px;">Establish Connection <span style="color:var(--primary)">//03</span></h2>
+                <div class="slide-up delay-1">
+                    <p style="color: var(--text-dim); max-width: 600px; margin: 0 auto 30px auto;">
+                        Have a project idea, security audit request, or just want to discuss anime? 
+                        My terminal is open for new transmissions.
+                    </p>
+                    <a href="mailto:mail.aniket@myyahoo.com" class="contact-btn hover-trigger">
+                        SEND TRANSMISSION
+                    </a>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer style="padding: 80px 0; text-align: center; border-top: 1px solid rgba(255,255,255,0.05);">
+        <div class="container">
+            <h3 class="slide-up" style="color: var(--text); font-size: 1rem; letter-spacing: 2px; opacity: 0.7;">SOCIAL UPLINK</h3>
+            
+            <div id="social-grid" class="social-container slide-up delay-1"></div>
+
+            <p class="slide-up delay-2" style="margin-top: 50px; font-family: var(--font-mono); font-size: 0.8rem; opacity: 0.4;">
+                © <span id="year"></span> ANIKET BAG. ALL RIGHTS RESERVED.
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        /* ----------------------------------------------------
+           CONFIGURATION
+           ---------------------------------------------------- */
+        const CONFIG = {
+            photoUrl: "https://i.ibb.co/KtJrPJq/profile.jpg", 
+            
+            projects: [
+                {
+                    title: "LinkUp",
+                    desc: "A real-time messaging web application facilitating instant communication and data exchange. Built for speed and reliability.",
+                    tags: ["Web Dev", "Real-Time", "Full Stack"],
+                    link: "https://github.com/aniketuv/LinkUp"
+                },
+                {
+                    title: "AniFlix",
+                    desc: "A dedicated streaming and tracking platform designed for anime enthusiasts, featuring a custom UI and content discovery API.",
+                    tags: ["Streaming", "UI/UX", "Frontend"],
+                    link: "https://github.com/aniketuv/AniFlix"
+                }
+            ],
+            skills: [
+                "Ethical Hacking", "Penetration Testing", "Python", "C++", 
+                "Web Development", "Creative Writing", "Photo Editing"
+            ],
+            
+            // SOCIAL PROFILES
+            socials: [
+                {
+                    name: "GitHub",
+                    url: "https://github.com/aniketuv/",
+                    path: "M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
+                },
+                {
+                    name: "LinkedIn",
+                    url: "https://www.linkedin.com/in/aniketuv?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app",
+                    path: "M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"
+                },
+                {
+                    name: "Instagram",
+                    url: "https://www.instagram.com/aniketuv?igsh=aHoxOTZmdWx3ZzBo",
+                    path: "M7.8,2H16.2C19.4,2 22,4.6 22,7.8V16.2A5.8,5.8 0 0,1 16.2,22H7.8C4.6,22 2,19.4 2,16.2V7.8A5.8,5.8 0 0,1 7.8,2M7.6,4A3.6,3.6 0 0,0 4,7.6V16.4C4,18.39 5.61,20 7.6,20H16.4A3.6,3.6 0 0,0 20,16.4V7.6C20,5.61 18.39,4 16.4,4H7.6M17.25,5.5A1.25,1.25 0 0,1 18.5,6.75A1.25,1.25 0 0,1 17.25,8A1.25,1.25 0 0,1 16,6.75A1.25,1.25 0 0,1 17.25,5.5M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z"
+                }
+            ]
+        };
+
+        /* ----------------------------------------------------
+           SYSTEM LOGIC
+           ---------------------------------------------------- */
+        
+        document.getElementById('hero-img-target').src = CONFIG.photoUrl;
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        const pContainer = document.getElementById('project-grid');
+        CONFIG.projects.forEach((p, index) => {
+            let delayClass = index < 4 ? `delay-${index + 1}` : '';
+            pContainer.innerHTML += `
+            <a href="${p.link}" target="_blank" class="card hover-trigger slide-up ${delayClass}">
+                <h3>${p.title}</h3>
+                <p style="color:var(--text-dim); font-size:0.9rem;">${p.desc}</p>
+                <div class="tags">${p.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+            </a>`;
+        });
+
+        const sContainer = document.getElementById('skill-grid');
+        CONFIG.skills.forEach(s => {
+            sContainer.innerHTML += `<span style="border:1px solid #333; padding:8px 15px; color:var(--text); font-family:var(--font-mono); font-size:0.8rem;">${s}</span>`;
+        });
+
+        // INJECT SOCIAL ICONS
+        const socialGrid = document.getElementById('social-grid');
+        CONFIG.socials.forEach(s => {
+            socialGrid.innerHTML += `
+            <a href="${s.url}" target="_blank" class="social-icon hover-trigger" aria-label="${s.name}">
+                <svg viewBox="0 0 24 24"><path d="${s.path}"/></svg>
+            </a>`;
+        });
+
+        const lenis = new Lenis({
+            duration: 1.5,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            direction: 'vertical',
+            gestureDirection: 'vertical',
+            smooth: true,
+            mouseMultiplier: 1,
+            smoothTouch: false,
+            touchMultiplier: 2,
+        });
+
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+
+        const observerOptions = { threshold: 0.1, rootMargin: "0px" }; 
+        const slideObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('in-view');
+                } else {
+                    entry.target.classList.remove('in-view');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.slide-up').forEach(el => slideObserver.observe(el));
+
+        document.addEventListener("mousemove", (e) => {
+            if(window.innerWidth > 768) {
+                document.querySelectorAll(".parallax-layer").forEach((layer) => {
+                    const speed = layer.getAttribute("data-speed");
+                    const x = (window.innerWidth - e.pageX * speed) / 100;
+                    const y = (window.innerHeight - e.pageY * speed) / 100;
+                    layer.style.transform = `translate(${x}px, ${y}px)`;
+                });
+            }
+        });
+
+        const canvas = document.getElementById('network-canvas'), ctx = canvas.getContext('2d');
+        let w, h, particles = [];
+        function resize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize); resize();
+        
+        for(let i=0; i<60; i++) particles.push({
+            x:Math.random()*w, y:Math.random()*h, 
+            vx:(Math.random()-.5)*.5, vy:(Math.random()-.5)*.5
+        });
+
+        function animate() {
+            ctx.clearRect(0,0,w,h); 
+            particles.forEach((p, i) => {
+                p.x+=p.vx; p.y+=p.vy;
+                if(p.x<0||p.x>w) p.vx*=-1; if(p.y<0||p.y>h) p.vy*=-1;
+                ctx.fillStyle = 'rgba(0,255,136,0.4)';
+                ctx.fillRect(p.x, p.y, 2, 2);
+                for(let j=i; j<particles.length; j++) {
+                    let dx=p.x-particles[j].x, dy=p.y-particles[j].y, d=Math.sqrt(dx*dx+dy*dy);
+                    if(d<120) { 
+                        ctx.beginPath(); 
+                        ctx.strokeStyle=`rgba(0,255,136,${0.15-d/1000})`; 
+                        ctx.moveTo(p.x,p.y); ctx.lineTo(particles[j].x,particles[j].y); 
+                        ctx.stroke(); 
+                    }
+                }
+            });
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+</body>
+</html>
